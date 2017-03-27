@@ -8,55 +8,49 @@
 # Copyright:   (c) deeba 2017
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
-
-# AddField
-
 import arcpy
+#import numpy
 
 # Set environment settings
-arcpy.env.workspace = r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb"
+arcpy.env.workspace = r"C:\Users\greg6750\Documents\hot-spot-Philippines-emily\Project_2_Option_2.gdb"#r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb"
+in_fc = r"C:\Users\greg6750\Documents\hot-spot-Philippines-emily\Project_2_Option_2.gdb\Philippines"#r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines"
+outFC = r"C:\Users\greg6750\Documents\hot-spot-Philippines-emily\Project_2_Option_2.gdb\Philippines_wDate"#r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines\date"
+output_cube = r"C:\Users\greg6750\Documents\hot-spot-Philippines-emily\spacetimecube.nc" #r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines.nc"
+
 
 # Set local variables
-inFeatures = "Philippines"
 fieldName1 = "Date"
 fieldType = "DATE"
-
-arcpy.AddField_management(inFeatures, fieldName1, fieldType)
-
-
-import numpy
-
-in_fc = r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines"
 field1 = "iday"
 field2 = "imonth"
 field3 = "iyear"
 
-import arcpy.da
-array1 = arcpy.da.FeatureClasstoNumPyArray(in_fc, [field1, field2, field3])
+##Dont need this
+##array1 = arcpy.da.FeatureClassToNumPyArray(in_fc, [field1, field2, field3]) #arcpy.da.FeatureClassToNumPyArray
+##sr = arcpy.Describe(in_fc).SpatialReference
+##arcpy.da.NumPyArrayToFeatureClass(array1, outFC, ['Date'], sr)
 
-sr = arcpy.SpatialReference()
-outFC = r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines\date"
-
-
-
-arcpy.da.NumPyArrayToFeatureClass(array1, outFC, ['Date'], sr)
-
-
+#If field exists, add field
 try:
+    field = arcpy.ListFields(fieldName1)
+except:
+    field = fieldName1
 
-    # Create Space Time Cube
-output_cube = r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines.nc
+if len(field)>0:
+    arcpy.AddField_management(in_fc, fieldName1, fieldType)
 
-#from above, populated FC with "Date"
-time_field = outFC
+#field calculation to populate time field
+expression = "time.strftime(' !iday! / !imonth! / !iyear! ')"
+newTerrorData = arcpy.CalculateField_management(in_fc, fieldName1, expression, "PYTHON")
 
+# Create Space Time Cube
 #not sure if SPACE_TIME_NEIGHBORS is an appropriate summary field
-cube = CreateSpaceTimeCube_stpm(in_fc, output_cube, time_field, SPACE_TIME_NEIGHBORS)
+cube = arcpy.CreateSpaceTimeCube_stpm(in_fc, output_cube, fieldName1) #,"","6 Months","END_TIME", "","","")
 
-    # Create a polygon that defines where incidents are possible
-    # Process: Minimum Bounding Geometry of homicide incident data
-arcpy.MinimumBoundingGeometry_management("Philippines.shp", "bounding.shp", "CONVEX_HULL",
-                                             "ALL", "#", "NO_MBG_FIELDS")
+# Create a polygon that defines where incidents are possible
+# Process: Minimum Bounding Geometry of homicide incident data
+#arcpy.MinimumBoundingGeometry_management("Philippines.shp", "bounding.shp", "CONVEX_HULL",
+                                             #"ALL", "#", "NO_MBG_FIELDS")
 #i don't think i need the code below
 ##    # Emerging Hot Spot Analysis of homicide incident cube using 5 Miles neighborhood
 ##    # distance and 2 neighborhood time step to detect hot spots
