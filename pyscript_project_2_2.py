@@ -9,14 +9,13 @@
 # Licence:     <your licence>
 #-------------------------------------------------------------------------------
 import arcpy
-#import numpy
-
+import numpy
+arcpy.env.overwriteOutput = True
 # Set environment settings
-arcpy.env.workspace = r"C:\Users\greg6750\Documents\hot-spot-Philippines-emily\Project_2_Option_2.gdb"#r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb"
-in_fc = r"C:\Users\greg6750\Documents\hot-spot-Philippines-emily\Project_2_Option_2.gdb\Philippines"#r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines"
-outFC = r"C:\Users\greg6750\Documents\hot-spot-Philippines-emily\Project_2_Option_2.gdb\Philippines_wDate"#r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines\date"
-output_cube = r"C:\Users\greg6750\Documents\hot-spot-Philippines-emily\spacetimecube.nc" #r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines.nc"
-
+arcpy.env.workspace = r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb"
+in_fc = r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines"
+outFC = r"E:\P in GIS\Project_2_2\Project_2_Option_2.gdb\Philippines_hotspot"
+output_cube = r"E:\P in GIS\Project_2_2\Philippines.nc"
 
 # Set local variables
 fieldName1 = "Date"
@@ -42,10 +41,11 @@ if len(field)>0:
 #field calculation to populate time field
 expression = "time.strftime(' !iday! / !imonth! / !iyear! ')"
 newTerrorData = arcpy.CalculateField_management(in_fc, fieldName1, expression, "PYTHON")
-
+print("field calculated.")
 # Create Space Time Cube
 #not sure if SPACE_TIME_NEIGHBORS is an appropriate summary field
 cube = arcpy.CreateSpaceTimeCube_stpm(in_fc, output_cube, fieldName1) #,"","6 Months","END_TIME", "","","")
+print("Created cube.")
 
 # Create a polygon that defines where incidents are possible
 # Process: Minimum Bounding Geometry of homicide incident data
@@ -55,8 +55,10 @@ cube = arcpy.CreateSpaceTimeCube_stpm(in_fc, output_cube, fieldName1) #,"","6 Mo
 ##    # Emerging Hot Spot Analysis of homicide incident cube using 5 Miles neighborhood
 ##    # distance and 2 neighborhood time step to detect hot spots
 ##    # Process: Emerging Hot Spot Analysis
-##cube = arcpy.EmergingHotSpotAnalysis_stpm("Homicides.nc", "COUNT", "EHS_Homicides.shp",
-##                                              "5 Miles", 2, "bounding.shp")
+hotspot= arcpy.EmergingHotSpotAnalysis_stpm(output_cube, "COUNT",outFC,
+                                              "5 Miles", 2)
+
+print("Done."")
 ##
 ##except arcpy.ExecuteError:
 ##    # If any error occurred when running the tool, print the messages
